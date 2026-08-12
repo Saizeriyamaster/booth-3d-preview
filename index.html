@@ -494,6 +494,8 @@ tableCluster(table2X, tableZ);
   nCarpet.receiveShadow = true;
   scene.add(nCarpet);
 
+  // 手前の壁（自ブースの壁とすぐ隣接・背中合わせになるよう共有境界のすぐ外側に設置）
+  box(BW, WALL_H, 0.05, matNeighborWall, 0, WALL_H / 2, nZStart + 0.025);
   // 奥の壁（自ブースほどの作り込みはせず簡易パネルのみ）
   box(BW, WALL_H, 0.05, matNeighborWall, 0, WALL_H / 2, nZEnd - 0.025);
 
