@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+3<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
@@ -88,15 +88,20 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.target.set(0, 1.2, 0);
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x333344, 0.7));
-const key = new THREE.DirectionalLight(0xffffff, 1.0);
+// 演出用のスポット/点光源は使わず、全体を均一に照らすライトのみで各アイテムが
+// くっきり見えるようにする（ハイライトの明滅・グレアを避ける）。
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3d48, 0.9));
+const key = new THREE.DirectionalLight(0xffffff, 1.1);
 key.position.set(5, 10, 6);
 key.castShadow = true;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0x6688ff, 0.5);
-fill.position.set(-5, 4, -4);
+const fill = new THREE.DirectionalLight(0xaebbdd, 0.6);
+fill.position.set(-5, 6, -4);
 scene.add(fill);
-scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+const fill2 = new THREE.DirectionalLight(0xffffff, 0.45);
+fill2.position.set(0, 4, -8);
+scene.add(fill2);
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 
 function resize() {
   const st = document.querySelector("#stage");
@@ -233,8 +238,9 @@ const SIGN_W = 1.8, SIGN_H = 0.3;
   const signZ = -BD / 2 - 0.02;
   // 白パネル本体
   box(SIGN_W, SIGN_H, 0.02, matSignWhite, signX, signY, signZ, Math.PI);
-  // 社名板の下端を通す黒い横棒（上のヘッダーフレームと対で挟み込む）
-  box(SIGN_W, POST_FACE, POST_FACE, matAluminum, signX, signY - SIGN_H / 2, -BD / 2);
+  // 社名板の下端を通す黒い横棒。上のヘッダー（P4-P3間の骨組み）と同じ長さにして
+  // 両端が角の支柱・壁側まで届くようにする。
+  box(BW, POST_FACE, POST_FACE, matAluminum, signX, signY - SIGN_H / 2, -BD / 2);
   // ロゴ（白パネルの手前・実ファイルの縦横比を保って中央配置）
   const logoH = SIGN_H * 0.8;
   const logoW = logoH * LOGO_ASPECT;
@@ -377,9 +383,11 @@ function pipeChair(x, z, facingRad) {
   const railY = SH - SEAT_T;       // 座面を受けるフレーム上端の高さ
   const topHalf = 0.17;            // 座面レール位置の脚オフセット（狭い）
   const botHalf = 0.205;           // 接地位置の脚オフセット（末広がりに広い）
+  const backPostHalf = 0.15;       // 背もたれ支柱の左右オフセット（座面より少し内側へ絞る）
   const zf = 0.18, zb = -0.18;     // 前端・後端のZ
-  const legR = 0.011;
-  const backH = 0.32;
+  const legR = 0.013;
+  const backH = 0.30;
+  const BACK_W = backPostHalf * 2 + 0.02;
 
   // 座面（黒樹脂 400×400、縁が少し立ち上がる厚みのある成形パネル）
   const seat = new THREE.Mesh(new THREE.BoxGeometry(SEAT_W, SEAT_T, SEAT_D), matChairSeat);
@@ -387,9 +395,9 @@ function pipeChair(x, z, facingRad) {
   seat.castShadow = true;
   g.add(seat);
 
-  // 背もたれ（座面後端から立ち上がり、わずかに後傾）
-  const back = new THREE.Mesh(new THREE.BoxGeometry(SEAT_W, backH, 0.025), matChairSeat);
-  back.position.set(0, railY + backH / 2, zb - 0.015);
+  // 背もたれ（座面より一回り細く、わずかに後傾。フレームに囲われる）
+  const back = new THREE.Mesh(new THREE.BoxGeometry(BACK_W, backH, 0.022), matChairSeat);
+  back.position.set(0, railY + backH / 2, zb - 0.02);
   back.rotation.x = -0.08;
   back.castShadow = true;
   g.add(back);
@@ -400,10 +408,10 @@ function pipeChair(x, z, facingRad) {
     const backBottom = [s * botHalf, 0, zb];
     const frontTop = [s * topHalf, railY, zf];
     const backTop = [s * topHalf, railY, zb];
-    const backrestTop = [s * topHalf, railY + backH, zb - 0.02];
+    const backrestTop = [s * backPostHalf, railY + backH, zb - 0.025];
 
     tube(frontBottom, backTop, legR, matChrome, g);      // 前脚下端→座面後端（Xの片側）
-    tube(backTop, backrestTop, legR, matChrome, g);      // 後端から背もたれ支柱へ連続
+    tube(backTop, backrestTop, legR, matChrome, g);      // 後端から背もたれ支柱へ連続（内側へ絞る）
     tube(backBottom, frontTop, legR, matChrome, g);      // 後脚下端→座面前端（Xのもう片側）
 
     // 交差部のピボット（折りたたみ椅子の定番リベット表現）
@@ -412,9 +420,13 @@ function pipeChair(x, z, facingRad) {
     g.add(pivot);
   });
 
-  // 座面を受ける前後のレール（左右の脚上端をつなぐ）
+  // 座面を受ける四方のレール（前後＋左右で座面フレームを一周させる）
   tube([-topHalf, railY, zf], [topHalf, railY, zf], legR, matChrome, g);
   tube([-topHalf, railY, zb], [topHalf, railY, zb], legR, matChrome, g);
+  tube([-topHalf, railY, zf], [-topHalf, railY, zb], legR, matChrome, g);
+  tube([topHalf, railY, zf], [topHalf, railY, zb], legR, matChrome, g);
+  // 背もたれ上端を結ぶトップレール（背もたれパネルを枠のように囲う）
+  tube([-backPostHalf, railY + backH, zb - 0.025], [backPostHalf, railY + backH, zb - 0.025], legR, matChrome, g);
   // 床際の前後スタビライザー（安定用の横棒）
   tube([-botHalf, 0.02, zf], [botHalf, 0.02, zf], legR, matChrome, g);
   tube([-botHalf, 0.02, zb], [botHalf, 0.02, zb], legR, matChrome, g);
@@ -454,12 +466,6 @@ displayTable(table2X, displayTableZ);
 tableCluster(table1X, tableZ);
 tableCluster(table2X, tableZ);
 
-// ---- スポットライト ----
-[[-1.8, 0.8], [0.2, 0.8], [2.2, 0.8]].forEach(([x, z]) => {
-  const bulb = new THREE.PointLight(0xfff2dd, 4.5, 4);
-  bulb.position.set(x, WALL_H - 0.2, z);
-  scene.add(bulb);
-});
 
 // ---- カメラプリセット ----
 const CAMS = [
