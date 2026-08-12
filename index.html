@@ -43,6 +43,7 @@
       <b>展示台B ×2</b> W990×D495×H900（黒天板・壁付け）<br>
       <b>丸テーブル ×2</b> Φ600×H700<br>
       <b>パイプイス ×6</b> 各テーブルを3方向（壁側・左・右）から囲み、通路側は開放<br>
+      <b>隣接ブース</b> 長辺の共有壁の向こう側に同サイズ（6×2m）の他社ブースを簡易表現（什器配置は仮）<br>
     </div>
   </aside>
   <div id="stage">
@@ -476,10 +477,41 @@ displayTable(table2X, displayTableZ);
 tableCluster(table1X, tableZ);
 tableCluster(table2X, tableZ);
 
+// ---- 隣接ブース（長辺の壁の向こう側・全く同じ6×2mサイズ）----
+// 共有壁の反対側に他社ブースがある想定の文脈表現。レイアウト・什器は仮のものでよいので、
+// 簡易な壁とプレースホルダー什器のみで構成する（自分たちのブースほど作り込まない）。
+{
+  const nZStart = CORNER_Z;       // 共有壁（自ブースの壁と共通）
+  const nZEnd = CORNER_Z + BD;    // 隣接ブースの奥の壁
+  const nZc = (nZStart + nZEnd) / 2;
+  const matNeighborCarpet = new THREE.MeshStandardMaterial({ color: 0x1b1c1f, roughness: 0.95 });
+  const matNeighborWall = new THREE.MeshStandardMaterial({ color: 0x232428, roughness: 0.8 });
+  const matNeighborFurniture = new THREE.MeshStandardMaterial({ color: 0x4a4d55, roughness: 0.6 });
+
+  const nCarpet = new THREE.Mesh(new THREE.PlaneGeometry(BW, BD), matNeighborCarpet);
+  nCarpet.rotation.x = -Math.PI / 2;
+  nCarpet.position.set(0, 0.001, nZc);
+  nCarpet.receiveShadow = true;
+  scene.add(nCarpet);
+
+  // 奥の壁（自ブースほどの作り込みはせず簡易パネルのみ）
+  box(BW, WALL_H, 0.05, matNeighborWall, 0, WALL_H / 2, nZEnd - 0.025);
+
+  // 適当な什器プレースホルダー（他社ブースの雰囲気を出す程度）
+  box(1.2, 0.9, 0.6, matNeighborFurniture, -1.8, 0.45, nZEnd - 0.5);
+  box(0.9, 0.75, 0.9, matNeighborFurniture, 0.6, 0.375, nZc + 0.3);
+  const nRoundTop = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.03, 24), matNeighborFurniture);
+  nRoundTop.position.set(2.2, 0.7, nZc - 0.3);
+  scene.add(nRoundTop);
+  const nRoundPole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.66, 12), matChrome);
+  nRoundPole.position.set(2.2, 0.35, nZc - 0.3);
+  scene.add(nRoundPole);
+}
 
 // ---- カメラプリセット ----
 const CAMS = [
   { id: "aerial", label: "俯瞰", pos: [3.2, 5.5, 4.5], look: [0, 1.0, 0] },
+  { id: "withNeighbor", label: "俯瞰（隣接ブース含む）", pos: [5.5, 7.5, 6.5], look: [0, 1.0, 1] },
   { id: "corner", label: "入隅コーナー", pos: [-1.5, 1.8, -2.0], look: [CORNER_X + 0.6, 1.3, CORNER_Z - 0.4] },
   { id: "front", label: "通路側正面", pos: [0, 1.5, -4.5], look: [0, 1.3, 0.5] },
   { id: "reception", label: "受付カウンター", pos: [1.6, 1.5, -0.4], look: [receptionX, 1.0, receptionZ] },
