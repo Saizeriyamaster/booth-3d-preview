@@ -1,9 +1,9 @@
-3<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>展示会ブース 3Dプレビュー — 6×2m コーナー小間タイプ</title>
+<title>2609AIEXPO_Fukuoka — 展示会ブース 3Dプレビュー</title>
 <style>
   :root { --bg:#0c0d10; --panel:#14171c; --line:#2a3038; --text:#e8eaed; --muted:#8b929b; --accent:#6ea0ff; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -30,7 +30,7 @@
 <body>
 <div id="app">
   <aside>
-    <h1>展示会ブース 3Dプレビュー</h1>
+    <h1>2609AIEXPO_Fukuoka</h1>
     <p class="sub">コーナー小間タイプ 6×2m（W6000×D2000×H2700）。長辺1面＋短辺1面に壁（990mmピッチ・黒い10mm角の支柱）、残り2面は吹き抜け。開放長辺の頭上フレームに社名板（1800×300白パネル＋ロゴ）。</p>
     <div id="cams"></div>
     <div class="note">
@@ -101,7 +101,15 @@ scene.add(fill);
 const fill2 = new THREE.DirectionalLight(0xffffff, 0.45);
 fill2.position.set(0, 4, -8);
 scene.add(fill2);
-scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+// 視認性向上のための追加光（真上・斜め上から）。壁や什器に固定具は設置しない、
+// あくまで光源のみの演出。
+const overheadTop = new THREE.DirectionalLight(0xffffff, 0.9);
+overheadTop.position.set(0.5, 14, 0.5);
+scene.add(overheadTop);
+const overheadDiag = new THREE.DirectionalLight(0xffffff, 0.6);
+overheadDiag.position.set(-2.5, 11, 2.5);
+scene.add(overheadDiag);
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
 function resize() {
   const st = document.querySelector("#stage");
@@ -395,9 +403,11 @@ function pipeChair(x, z, facingRad) {
   seat.castShadow = true;
   g.add(seat);
 
-  // 背もたれ（座面より一回り細く、わずかに後傾。フレームに囲われる）
-  const back = new THREE.Mesh(new THREE.BoxGeometry(BACK_W, backH, 0.022), matChairSeat);
-  back.position.set(0, railY + backH / 2, zb - 0.02);
+  // 背もたれ（座面より一回り細く、わずかに後傾）。支柱の全長を覆わず、
+  // 支柱上部（トップレール直下）だけにアタッチし、下側はチューブがむき出しになる。
+  const backPanelH = backH * 0.46;
+  const back = new THREE.Mesh(new THREE.BoxGeometry(BACK_W, backPanelH, 0.022), matChairSeat);
+  back.position.set(0, railY + backH - backPanelH / 2, zb - 0.02);
   back.rotation.x = -0.08;
   back.castShadow = true;
   g.add(back);
