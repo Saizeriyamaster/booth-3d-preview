@@ -76,13 +76,15 @@ const BW = 6.0, BD = 2.0, WALL_H = 2.7;
 const CORNER_X = -BW / 2, CORNER_Z = BD / 2;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1d24);
+scene.background = new THREE.Color(0x4d525c);
 
 const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 80);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setClearColor(0x1a1d24, 1);
+renderer.setClearColor(0x4d525c, 1);
 renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
 document.querySelector("#stage").appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -91,26 +93,28 @@ controls.target.set(0, 1.2, 0);
 
 // 演出用のスポット/点光源は使わず、全体を均一に照らすライトのみで各アイテムが
 // くっきり見えるようにする（ハイライトの明滅・グレアを避ける）。
-scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3d48, 0.9));
-const key = new THREE.DirectionalLight(0xffffff, 1.1);
+// three.js r155+は物理ベースの光量単位がデフォルトのため、旧来の0〜1程度の
+// intensityでは全体が暗く沈む。黒い壁面・什器がくっきり見える明るさまで底上げする。
+scene.add(new THREE.HemisphereLight(0xffffff, 0x3a3d48, 2.6));
+const key = new THREE.DirectionalLight(0xffffff, 2.4);
 key.position.set(5, 10, 6);
 key.castShadow = true;
 scene.add(key);
-const fill = new THREE.DirectionalLight(0xaebbdd, 0.6);
+const fill = new THREE.DirectionalLight(0xaebbdd, 1.8);
 fill.position.set(-5, 6, -4);
 scene.add(fill);
-const fill2 = new THREE.DirectionalLight(0xffffff, 0.45);
+const fill2 = new THREE.DirectionalLight(0xffffff, 1.5);
 fill2.position.set(0, 4, -8);
 scene.add(fill2);
 // 視認性向上のための追加光（真上・斜め上から）。壁や什器に固定具は設置しない、
 // あくまで光源のみの演出。
-const overheadTop = new THREE.DirectionalLight(0xffffff, 0.9);
+const overheadTop = new THREE.DirectionalLight(0xffffff, 2.2);
 overheadTop.position.set(0.5, 14, 0.5);
 scene.add(overheadTop);
-const overheadDiag = new THREE.DirectionalLight(0xffffff, 0.6);
+const overheadDiag = new THREE.DirectionalLight(0xffffff, 1.7);
 overheadDiag.position.set(-2.5, 11, 2.5);
 scene.add(overheadDiag);
-scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+scene.add(new THREE.AmbientLight(0xffffff, 1.8));
 
 function resize() {
   const st = document.querySelector("#stage");
